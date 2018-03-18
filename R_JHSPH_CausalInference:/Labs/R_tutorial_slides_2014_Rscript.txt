@@ -1,0 +1,319 @@
+##########################################################
+# R code for A brief introduction to R slides
+# Causal Inference in Medicine and Public Health (140.644)
+##########################################################
+
+
+# Set working directory -- replace the path below with an existing location on the computer you are using
+## In PC:
+setwd("C://myfolder")  
+## In mac:
+setwd("/Myfolder/")
+
+# RStudio on Mac:  Session -> Set Working Directory
+# RStudo on Windows:  Tools -> Set Working Directory
+
+##How it get help in an R Session##
+?lm     			# function search
+help(lm)			# function search
+help.search("linear models")    # non-function keyword search
+help.start()    		# R manuals
+
+##Math in R
+1+1
+1+1*7
+(1+1) * 7
+
+#Variables
+x <- 1
+x
+y = 2
+y
+
+3 -> z
+z
+(x+y) *z
+
+
+#Defining Vectors
+a <- c(0.5, 0.6) 
+b <- c(TRUE, FALSE) 
+c <- c(T, F) 
+d <- c("a", "b", "c") 
+e <- 9:29 
+f <- c(1+0i, 2+4i)   
+g <- vector("numeric", length = 10)
+g
+
+
+# Defining matrices 
+x <- c(10,20,30,40)
+y <- c(50,60,70,80)
+matrix1 <- cbind(x,y)
+matrix2 <- rbind(x,y)
+matrix1
+matrix2
+
+# More Object assignment
+h1 = c(3,4,5)
+h2 <- c(3,4,5)
+h3 = c(1,2,3,4,5,6,7,8,9,10)
+i <- rep(1:10)
+#j1 = 4x4 matrix of all 0s
+j2 <- matrix(NA,ncol=4,nrow=4)
+
+
+
+##Factor Variables
+gender <- c("male", "male", "male", "male", "male", "male", "male", "male", "male", 
+            "male", "male", "male", "male", "female", "female",
+            "male", "male",  "male", "male", "female")
+is.factor(gender)
+gender.f <- factor(gender)
+is.factor(gender.f)
+levels(gender.f)
+table(gender.f)
+
+gender2.f <- factor(gender, levels = c("male", "female"))
+is.factor(gender2.f)
+levels(gender2.f)
+table(gender2.f)
+
+##Ordered Factors
+g.order <- ordered(gender, levels = c("male", "female"))
+is.factor(g.order)
+levels(g.order)
+g.order
+gender
+gender.f
+gender2.f
+
+# You can tell an ordered factor 
+# from an ordinary factor by the presence of 
+# directional signs (< or >) in the levels
+g.order
+
+table(gender.f)
+table(g.order)
+
+
+# Install and load in the "MatchIt" package
+install.packages("MatchIt")
+install.packages("foreign")
+library(MatchIt)
+library(foreign)
+
+# Load in the Lalonde dataset into memory:  now have "lalonde" object in workspace
+data(lalonde)
+
+# Exploring the data: Summaries
+# Brief summary stats for all variables
+summary(lalonde)
+# Display names of all variables in data fram
+names(lalonde)
+# Displays first several rows of the data 
+head(lalonde)
+# Equivlent to head()
+lalonde[1:6,]
+
+# Reference variable within data frame with $
+married_lalonde <- lalonde$married
+
+
+# Check object type of lalonde (data frame)
+class(lalonde)
+# Convert from one object type to another 
+lalonde.matrix <- as.matrix(lalonde[,2:5])
+class(lalonde.matrix)
+
+#Similarly, can check object type of variables
+class(lalonde$married)
+class(lalonde$re78)
+
+
+# Create new dataset that is only the 2nd-5th columns of lalonde
+lalonde.small <- lalonde[,2:5]
+lalonde[1:6,c("age", "educ")]
+# lalonde dataset for only those with nodegree == 1 
+lalonde.nodegree <- lalonde[lalonde$nodegree!=1,]
+
+# #More Subsetting Examples
+#Create a data frame (cc.df) composed of 5 variables (V1 - V5) 
+#where the values come from a normal distribution with a mean 0
+#and standard deviation of 1; 
+#and one variable (bb) containing integers from 1 to 5
+
+aa <- matrix(rnorm(30, mean = 0, sd = 1), ncol=5)
+bb <- c(1, seq(5))
+
+#combining x and y into one matrix
+cc <- cbind(aa, bb)
+
+#turning the matrix into a data frame
+cc.df <- data.frame(cc)
+print(cc.df)
+print(names(cc.df))
+
+#subsetting rows using indices
+cc.sub4 <- cc.df[cc.df$bb == 1, ]
+print(cc.sub4)
+
+#subsetting row using indices
+#selecting on more than one value (inlude rows in which BB = 1 or 4)
+# use the %in% notation when we want to subset on multiple values of bb
+cc.sub5 <- cc.df[cc.df$bb %in% c(1,4), ]
+print(cc.sub5)
+
+#subsetting columns using indices
+cc.sub6 <- cc.df[ ,1:2]
+print(cc.sub6)
+
+cc.sub7 <- cc.df[ , c(1, 3, 5)]
+print(cc.sub7)
+
+#subsetting both rows and columns using indices
+cc.sub8 <- cc.df[c(1, 3), 3:6]
+print(cc.sub8)
+
+##Testing for Missing Value
+nomissing = c(1,2,2,2,4,5,7,8,9,20, 99, 99, 22, 45, 45, 1,1,2,3,11,12,13,99, 100, 1,2,4)
+is.na(nomissing) # returns TRUE of x is missing
+missing <- c(1,2,2,2,4,5,7,NA,9,20, 99, 99, 22, NA, 45, 1,NA,2,3,11,12,13,99, NA, 1,2,4)
+is.na(missing) # returns a vector (F F F F F F F T, etc)
+
+missing[!is.na(missing)]
+
+mydata = data.frame(nomissing, missing) #data.frame() creates data frames
+
+#Recoding Values to Missing
+# recode 99 to missing for vector nomissing
+# select rows where v1 is 99 and recode column v1 
+mydata$nomissing[mydata$nomissing==99 ] = NA
+
+mean(mydata$nomissing, na.rm=TRUE)
+
+# Excluding Missing Values from Analyses
+# The function na.omit() returns the object with listwise deletion of missing values.
+newdata <- na.omit(mydata)
+
+
+# Logical statements to evaluate conditions
+# Determines which individuals in dataset have educ level > 5 AND re74 < 5000 
+table(lalonde$educ>5 & lalonde$re74<5000)
+
+# Counts how many individuals in dataset have educ level > 5 AND re74 < 5000
+sum(lalonde$educ>5 & lalonde$re74<5000)
+# Indicator variable for those who have educ level > 5 and re74 < 5000
+lalonde$v2 <- as.numeric(lalonde$educ>5 & lalonde$re74<5000)
+# Same as above: Indicator variable for those who have educ level > 5 and re74 < 5000
+lalonde$v3 <- ifelse(lalonde$educ>5 & lalonde$re74<5000,1,0) 
+table(lalonde$v2)
+table(lalonde$v3)
+
+# Recoding
+lalonde$lnre74 <- log(lalonde$re74)
+
+round(lalonde$re74)
+as.integer(lalonde$re74)
+
+##Another alternative to recoding variables is the  recode() command from the car package.
+install.packages("car")
+library(car) ## load package
+help(recode) ## documentation for the recode() function
+
+
+# Descriptive statistics
+# Must include na.rm = T for variables with missing data
+mean(mydata$missing) # returns NA
+mean(mydata$missing, na.rm=TRUE) # returns 
+
+# Basic table
+table(lalonde$educ)
+
+# Fancier tables
+install.packages("gmodels")
+library(gmodels)
+CrossTable(lalonde$educ)
+CrossTable(lalonde$married,lalonde$treat)
+
+## Descriptive Plotting
+plot(lalonde$re74,lalonde$re75)
+
+##Basic Graphics
+# Historgrams
+ hist(lalonde$educ)
+## Add a title to the graph with the "Main" Statement
+ hist(lalonde$educ, main=paste("Level of Education"))
+##Add axis labels
+##Use ?xlab? and ?ylab? to label the X and Y axes, respectively
+hist(lalonde$educ, xlab = "Education", ylab = "Frequency", main=paste("Level of Education"))
+#Add color with the "col" option
+hist(lalonde$educ, col = "darkolivegreen2", xlab = "Years of Education", ylab = "Frequency", main=paste("Level of Education"))
+ 
+##Box Plots, Groups
+is.factor(lalonde$nodegree)
+lalonde$f.nodegree <-ordered(lalonde$nodegree, levels = c("0", "1"), labels = c("No", "Yes"))
+is.factor(lalonde$f.nodegree)
+lalonde$f.nodegree
+boxplot(re74~f.nodegree,data=lalonde, main="Income Data", xlab="Degree Status", ylab="Income - 1974", col = "violetred3")
+
+##Check out http://research.stowers-institute.org/efg/R/Color/Chart/ColorChart.pdf
+##for a list of all the possible colors you can use in R
+
+# Basic test statistics
+
+# t-test
+t.test(lalonde$educ[lalonde$treat==1], lalonde$educ[lalonde$treat==0])
+
+# Wilcoxon test
+wilcox.test(lalonde$educ[lalonde$treat==1], lalonde$educ[lalonde$treat==0])
+
+# two ways to do Chi-Sq test
+CrossTable(lalonde$married,lalonde$treat, chisq = T)
+chisq.test(table(lalonde$treat, lalonde$married))
+
+##Options for printing R output
+options(scipen=6) # bias against scientific notation
+options(digits =3) #The digits option controls how many digits are printed (by default)
+
+
+# Basic models: Generalized linear models
+#plot(lalonde$married)
+married.model <- glm(married~educ+age, family=binomial(link=logit), data=lalonde)
+summary(married.model)
+# Get odds ratios
+exp(married.model$coefficients) 
+# To get 95% confidence intervals for the ORs
+exp(confint.default(married.model))
+
+
+# Basic models: Ordinary least squares
+lalonde.model <- lm(re75 ~ re74, data=lalonde)
+summary(lalonde.model)
+# Display confidence intervals
+confint(lalonde.model)
+
+# Plot of regression diagnostics
+#this tells R to set up 2x2 plot space
+par(mfrow = c(2, 2)) 
+ 
+# LM creates an object with results
+names(lalonde.model)
+lalonde.model$coefficients
+
+#plot regression line
+plot(lalonde$re74,lalonde$re75)
+
+## add m line through the current plot.
+abline(lalonde.model, col = "red")
+
+# Check model fit
+plot(lalonde.model$fitted.values, lalonde.model$residuals)
+
+# Plot of residuals
+plot(lalonde$age,lalonde.model$residuals,ylab="Residuals",xlab="Age", main = "Residual Plot 1")
+plot(lalonde$re74,lalonde.model$residuals,ylab="Residuals",xlab="1974 Earnings", main = "Residual Plot 2")
+
+
+
+        
